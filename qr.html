@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Queue System QR</title>
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+  </script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #111;
+    }
+
+    .container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 20px;
+      padding: 35px 25px;
+      text-align: center;
+      box-shadow:
+        0 5px 25px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-top: 10px;
+      margin-bottom: 30px;
+    }
+
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      margin: 25px 0;
+    }
+
+    #qrcode img {
+      width: 260px !important;
+      height: 260px !important;
+    }
+
+    .instruction {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 25px;
+    }
+
+    .url {
+      margin-top: 12px;
+      color: #777;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .print-button {
+      margin-top: 25px;
+      padding: 14px 25px;
+      border: 0;
+      border-radius: 12px;
+      background: #111;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    @media print {
+
+      body {
+        background: white;
+      }
+
+      .card {
+        box-shadow: none;
+      }
+
+      .print-button {
+        display: none;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="card">
+
+      <h1>Queue System</h1>
+
+      <div class="subtitle">
+        Ambil nombor giliran anda
+      </div>
+
+      <div id="qrcode"></div>
+
+      <div class="instruction">
+        📱 Scan QR Code
+      </div>
+
+      <div>
+        untuk ambil nombor giliran
+      </div>
+
+      <div class="url">
+        https://queue-system-sigma.vercel.app/
+      </div>
+
+      <button
+        class="print-button"
+        onclick="window.print()"
+      >
+        🖨️ Print QR Code
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    new QRCode(
+      document.getElementById("qrcode"),
+      {
+        text:
+          "https://queue-system-sigma.vercel.app/",
+
+        width: 260,
+        height: 260,
+
+        correctLevel:
+          QRCode.CorrectLevel.H
+      }
+    );
+
+  </script>
+
+</body>
+</html>
