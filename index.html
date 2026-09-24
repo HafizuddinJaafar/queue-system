@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Queue System</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #111;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
+      padding: 30px 18px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .header p {
+      margin-top: 8px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .service-button {
+      width: 100%;
+      padding: 18px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      background: white;
+      text-align: left;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .service-button:hover {
+      border-color: #111;
+      transform: translateY(-1px);
+    }
+
+    .service-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .service-name {
+      display: block;
+      font-weight: bold;
+    }
+
+    .service-prefix {
+      display: block;
+      margin-top: 4px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    .queue-result {
+      display: none;
+      text-align: center;
+    }
+
+    .queue-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .queue-number {
+      font-size: 64px;
+      font-weight: bold;
+      margin: 10px 0 20px;
+    }
+
+    .status {
+      padding: 12px;
+      border-radius: 12px;
+      background: #f3f3f3;
+      font-size: 14px;
+    }
+
+    .back-button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 13px;
+      border: 0;
+      border-radius: 12px;
+      background: #eee;
+      cursor: pointer;
+    }
+
+    .loading {
+      text-align: center;
+      color: #777;
+      padding: 20px;
+    }
+
+    .error {
+      background: #ffe5e5;
+      color: #a00000;
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+      <h1>Queue System</h1>
+
+      <p>
+        Sila pilih perkhidmatan
+      </p>
+
+    </div>
+
+
+    <!-- SERVICE SELECTION -->
+
+    <div class="card" id="serviceCard">
+
+      <h2>
+        Pilih Perkhidmatan
+      </h2>
+
+      <div id="services">
+
+        <div class="loading">
+          Memuatkan perkhidmatan...
+        </div>
+
+      </div>
+
+      <div id="errorMessage"></div>
+
+    </div>
+
+
+    <!-- QUEUE RESULT -->
+
+    <div
+      class="card queue-result"
+      id="queueResult"
+    >
+
+      <div class="queue-label">
+        Nombor giliran anda
+      </div>
+
+      <div
+        class="queue-number"
+        id="queueNumber"
+      >
+        A001
+      </div>
+
+      <div class="status">
+
+        <strong>Status</strong>
+
+        <br>
+
+        Menunggu giliran
+
+      </div>
+
+      <button
+        class="back-button"
+        onclick="location.reload()"
+      >
+        Ambil Nombor Lain
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    // ==========================================
+    // SUPABASE CONNECTION
+    // ==========================================
+
+    const SUPABASE_URL =
+      "https://evgctimzyxvpmbisguqe.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_-NNxefUNkEcxMRQZM9Ggug_ncGpz4d9";
+
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    // ==========================================
+    // LOAD SERVICES
+    // ==========================================
+
+    async function loadServices() {
+
+      const servicesContainer =
+        document.getElementById("services");
+
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("services")
+        .select("*")
+        .eq("is_active", true)
+        .order("id");
+
+
+      if (error) {
+
+        console.error(error);
+
+        servicesContainer.innerHTML = `
+          <div class="error">
+            Gagal memuatkan perkhidmatan.
+          </div>
+        `;
+
+        return;
+      }
+
+
+      servicesContainer.innerHTML = "";
+
+
+      data.forEach(service => {
+
+        const button =
+          document.createElement("button");
+
+
+        button.className =
+          "service-button";
+
+
+        button.innerHTML = `
+
+          <span class="service-name">
+            ${service.name}
+          </span>
+
+          <span class="service-prefix">
+            Prefix nombor: ${service.prefix}
+          </span>
+
+        `;
+
+
+        button.onclick = function() {
+
+          takeQueueNumber(service);
+
+        };
+
+
+        servicesContainer.appendChild(button);
+
+      });
+
+    }
+
+
+    // ==========================================
+    // TAKE QUEUE NUMBER
+    // ==========================================
+
+    async function takeQueueNumber(service) {
+
+      const buttons =
+        document.querySelectorAll(
+          ".service-button"
+        );
+
+
+      buttons.forEach(button => {
+
+        button.disabled = true;
+
+      });
+
+
+      try {
+
+        const today =
+          new Date()
+            .toISOString()
+            .split("T")[0];
+
+
+        // GET LAST NUMBER TODAY
+
+        const {
+          data: existing,
+          error: fetchError
+        } = await supabaseClient
+
+          .from("queue_tickets")
+
+          .select("queue_number")
+
+          .eq(
+            "service_id",
+            service.id
+          )
+
+          .gte(
+            "created_at",
+            `${today}T00:00:00`
+          )
+
+          .order(
+            "queue_number",
+            {
+              ascending: false
+            }
+          )
+
+          .limit(1);
+
+
+        if (fetchError) {
+
+          throw fetchError;
+
+        }
+
+
+        let nextNumber = 1;
+
+
+        if (
+          existing &&
+          existing.length > 0
+        ) {
+
+          nextNumber =
+            existing[0].queue_number + 1;
+
+        }
+
+
+        const displayNumber =
+          service.prefix +
+          String(nextNumber)
+            .padStart(3, "0");
+
+
+        // INSERT QUEUE
+
+        const {
+          error: insertError
+        } = await supabaseClient
+
+          .from("queue_tickets")
+
+          .insert({
+
+            service_id:
+              service.id,
+
+            queue_number:
+              nextNumber,
+
+            display_number:
+              displayNumber,
+
+            status:
+              "waiting"
+
+          });
+
+
+        if (insertError) {
+
+          throw insertError;
+
+        }
+
+
+        // SHOW RESULT
+
+        document.getElementById(
+          "serviceCard"
+        ).style.display = "none";
+
+
+        document.getElementById(
+          "queueResult"
+        ).style.display = "block";
+
+
+        document.getElementById(
+          "queueNumber"
+        ).textContent =
+          displayNumber;
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        document.getElementById(
+          "errorMessage"
+        ).innerHTML = `
+
+          <div class="error">
+
+            Gagal mengambil nombor.
+
+            <br>
+
+            Sila cuba lagi.
+
+          </div>
+
+        `;
+
+
+        buttons.forEach(button => {
+
+          button.disabled = false;
+
+        });
+
+      }
+
+    }
+
+
+    // ==========================================
+    // START
+    // ==========================================
+
+    loadServices();
+
+  </script>
+
+</body>
+</html>
