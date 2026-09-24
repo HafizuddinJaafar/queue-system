@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Staff Queue Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #111;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
+      padding: 25px 18px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .header p {
+      color: #666;
+      margin-top: 8px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    select {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 16px;
+      background: white;
+    }
+
+    .current-box {
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .current-label {
+      color: #777;
+      font-size: 14px;
+    }
+
+    .current-number {
+      font-size: 64px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .current-counter {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 15px;
+      border: 0;
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .next-button {
+      grid-column: span 2;
+      background: #111;
+      color: white;
+      font-size: 18px;
+      padding: 18px;
+    }
+
+    .recall-button {
+      background: #eee;
+    }
+
+    .skip-button {
+      background: #ffe5e5;
+      color: #a00000;
+    }
+
+    .complete-button {
+      background: #e5f5e5;
+      color: #267326;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .queue-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .queue-row:last-child {
+      border-bottom: 0;
+    }
+
+    .queue-number {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .queue-service {
+      color: #777;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #888;
+      padding: 20px;
+    }
+
+    .error {
+      background: #ffe5e5;
+      color: #a00000;
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 500px) {
+
+      .button-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .next-button {
+        grid-column: span 1;
+      }
+
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <h1>Staff Queue Dashboard</h1>
+      <p>Pengurusan nombor giliran</p>
+    </div>
+
+
+    <!-- COUNTER -->
+    <div class="card">
+
+      <h2>Pilih Kaunter</h2>
+
+      <select id="counterSelect">
+        <option value="">
+          Pilih kaunter
+        </option>
+      </select>
+
+    </div>
+
+
+    <!-- CURRENT QUEUE -->
+    <div class="card">
+
+      <div class="current-box">
+
+        <div class="current-label">
+          Sedang Dilayan
+        </div>
+
+        <div
+          class="current-number"
+          id="currentNumber"
+        >
+          -
+        </div>
+
+        <div
+          class="current-counter"
+          id="currentCounter"
+        >
+          Belum pilih kaunter
+        </div>
+
+      </div>
+
+
+      <div class="button-grid">
+
+        <button
+          class="next-button"
+          id="nextButton"
+          onclick="nextQueue()"
+          disabled
+        >
+          ▶️ Panggil Seterusnya
+        </button>
+
+        <button
+          class="recall-button"
+          id="recallButton"
+          onclick="recallQueue()"
+          disabled
+        >
+          🔊 Recall
+        </button>
+
+        <button
+          class="skip-button"
+          id="skipButton"
+          onclick="skipQueue()"
+          disabled
+        >
+          ⏭️ Skip
+        </button>
+
+        <button
+          class="complete-button"
+          id="completeButton"
+          onclick="completeQueue()"
+          disabled
+        >
+          ✅ Complete
+        </button>
+
+      </div>
+
+      <div id="errorMessage"></div>
+
+    </div>
+
+
+    <!-- WAITING QUEUE -->
+    <div class="card">
+
+      <h2>Queue Menunggu</h2>
+
+      <div id="waitingList">
+        <div class="empty">
+          Memuatkan queue...
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://evgctimzyxvpmbisguqe.supabase.co";
+
+    const SUPABASE_KEY =
+      "GANTI_DENGAN_KEY_YANG_SAMA_MACAM_INDEX_HTML";
+
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    let selectedCounter = null;
+    let currentTicket = null;
+
+
+    // ==========================================
+    // LOAD COUNTERS
+    // ==========================================
+
+    async function loadCounters() {
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("counters")
+        .select("*")
+        .eq("is_active", true)
+        .order("id");
+
+
+      if (error) {
+
+        showError(
+          "Gagal memuatkan kaunter."
+        );
+
+        console.error(error);
+
+        return;
+
+      }
+
+
+      const select =
+        document.getElementById(
+          "counterSelect"
+        );
+
+
+      data.forEach(counter => {
+
+        const option =
+          document.createElement("option");
+
+        option.value =
+          counter.id;
+
+        option.textContent =
+          counter.name;
+
+        select.appendChild(option);
+
+      });
+
+    }
+
+
+    // ==========================================
+    // SELECT COUNTER
+    // ==========================================
+
+    document
+      .getElementById("counterSelect")
+      .addEventListener(
+        "change",
+        function() {
+
+          const value =
+            this.value;
+
+          if (!value) {
+
+            selectedCounter = null;
+
+            currentTicket = null;
+
+            updateDisplay();
+
+            return;
+
+          }
+
+
+          const option =
+            this.options[
+              this.selectedIndex
+            ];
+
+
+          selectedCounter = {
+
+            id: Number(value),
+
+            name:
+              option.textContent
+
+          };
+
+
+          document.getElementById(
+            "currentCounter"
+          ).textContent =
+            selectedCounter.name;
+
+
+          loadCurrentTicket();
+
+        }
+      );
+
+
+    // ==========================================
+    // LOAD CURRENT TICKET
+    // ==========================================
+
+    async function loadCurrentTicket() {
+
+      if (!selectedCounter) {
+        return;
+      }
+
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("queue_tickets")
+        .select("*")
+        .eq(
+          "counter_id",
+          selectedCounter.id
+        )
+        .eq(
+          "status",
+          "serving"
+        )
+        .order(
+          "called_at",
+          {
+            ascending: false
+          }
+        )
+        .limit(1);
+
+
+      if (error) {
+
+        console.error(error);
+
+        return;
+
+      }
+
+
+      if (
+        data &&
+        data.length > 0
+      ) {
+
+        currentTicket =
+          data[0];
+
+      } else {
+
+        currentTicket = null;
+
+      }
+
+
+      updateDisplay();
+
+      loadWaitingQueue();
+
+    }
+
+
+    // ==========================================
+    // UPDATE DISPLAY
+    // ==========================================
+
+    function updateDisplay() {
+
+      const currentNumber =
+        document.getElementById(
+          "currentNumber"
+        );
+
+
+      if (currentTicket) {
+
+        currentNumber.textContent =
+          currentTicket.display_number;
+
+      } else {
+
+        currentNumber.textContent =
+          "-";
+
+      }
+
+
+      const hasTicket =
+        currentTicket !== null;
+
+
+      document.getElementById(
+        "recallButton"
+      ).disabled =
+        !hasTicket;
+
+
+      document.getElementById(
+        "skipButton"
+      ).disabled =
+        !hasTicket;
+
+
+      document.getElementById(
+        "completeButton"
+      ).disabled =
+        !hasTicket;
+
+
+      document.getElementById(
+        "nextButton"
+      ).disabled =
+        !selectedCounter;
+
+    }
+
+
+    // ==========================================
+    // NEXT QUEUE
+    // ==========================================
+
+    async function nextQueue() {
+
+      if (!selectedCounter) {
+
+        showError(
+          "Sila pilih kaunter dahulu."
+        );
+
+        return;
+
+      }
+
+
+      // Jika ada ticket sedang dilayan,
+      // complete dulu
+      if (currentTicket) {
+
+        await completeCurrentTicket();
+
+      }
+
+
+      // Cari waiting paling awal
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("queue_tickets")
+        .select("*")
+        .eq(
+          "status",
+          "waiting"
+        )
+        .order(
+          "queue_number",
+          {
+            ascending: true
+          }
+        )
+        .limit(1);
+
+
+      if (error) {
+
+        showError(
+          "Gagal mencari queue."
+        );
+
+        console.error(error);
+
+        return;
+
+      }
+
+
+      if (
+        !data ||
+        data.length === 0
+      ) {
+
+        showError(
+          "Tiada customer sedang menunggu."
+        );
+
+        return;
+
+      }
+
+
+      const ticket =
+        data[0];
+
+
+      const {
+        data: updated,
+        error: updateError
+      } = await supabaseClient
+        .from("queue_tickets")
+        .update({
+
+          status:
+            "serving",
+
+          counter_id:
+            selectedCounter.id,
+
+          called_at:
+            new Date().toISOString()
+
+        })
+        .eq(
+          "id",
+          ticket.id
+        )
+        .select()
+        .single();
+
+
+      if (updateError) {
+
+        showError(
+          "Gagal memanggil nombor."
+        );
+
+        console.error(updateError);
+
+        return;
+
+      }
+
+
+      currentTicket =
+        updated;
+
+
+      clearError();
+
+      updateDisplay();
+
+      loadWaitingQueue();
+
+    }
+
+
+    // ==========================================
+    // RECALL
+    // ==========================================
+
+    async function recallQueue() {
+
+      if (!currentTicket) {
+        return;
+      }
+
+
+      await supabaseClient
+        .from("queue_tickets")
+        .update({
+
+          called_at:
+            new Date().toISOString()
+
+        })
+        .eq(
+          "id",
+          currentTicket.id
+        );
+
+
+      clearError();
+
+    }
+
+
+    // ==========================================
+    // SKIP
+    // ==========================================
+
+    async function skipQueue() {
+
+      if (!currentTicket) {
+        return;
+      }
+
+
+      const {
+        error
+      } = await supabaseClient
+        .from("queue_tickets")
+        .update({
+
+          status:
+            "skipped"
+
+        })
+        .eq(
+          "id",
+          currentTicket.id
+        );
+
+
+      if (error) {
+
+        showError(
+          "Gagal skip nombor."
+        );
+
+        return;
+
+      }
+
+
+      currentTicket = null;
+
+      updateDisplay();
+
+      loadWaitingQueue();
+
+    }
+
+
+    // ==========================================
+    // COMPLETE
+    // ==========================================
+
+    async function completeQueue() {
+
+      if (!currentTicket) {
+        return;
+      }
+
+
+      await completeCurrentTicket();
+
+      currentTicket = null;
+
+      updateDisplay();
+
+      loadWaitingQueue();
+
+    }
+
+
+    async function completeCurrentTicket() {
+
+      if (!currentTicket) {
+        return;
+      }
+
+
+      const {
+        error
+      } = await supabaseClient
+        .from("queue_tickets")
+        .update({
+
+          status:
+            "completed",
+
+          completed_at:
+            new Date().toISOString()
+
+        })
+        .eq(
+          "id",
+          currentTicket.id
+        );
+
+
+      if (error) {
+
+        showError(
+          "Gagal complete nombor."
+        );
+
+        console.error(error);
+
+        return false;
+
+      }
+
+
+      return true;
+
+    }
+
+
+    // ==========================================
+    // WAITING LIST
+    // ==========================================
+
+    async function loadWaitingQueue() {
+
+      const list =
+        document.getElementById(
+          "waitingList"
+        );
+
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("queue_tickets")
+        .select(`
+          id,
+          queue_number,
+          display_number,
+          status,
+          service_id,
+          services (
+            name
+          )
+        `)
+        .eq(
+          "status",
+          "waiting"
+        )
+        .order(
+          "queue_number",
+          {
+            ascending: true
+          }
+        );
+
+
+      if (error) {
+
+        console.error(error);
+
+        list.innerHTML = `
+          <div class="error">
+            Gagal memuatkan queue.
+          </div>
+        `;
+
+        return;
+
+      }
+
+
+      if (
+        !data ||
+        data.length === 0
+      ) {
+
+        list.innerHTML = `
+          <div class="empty">
+            Tiada customer menunggu.
+          </div>
+        `;
+
+        return;
+
+      }
+
+
+      list.innerHTML = "";
+
+
+      data.forEach(ticket => {
+
+        const row =
+          document.createElement("div");
+
+
+        row.className =
+          "queue-row";
+
+
+        row.innerHTML = `
+
+          <div>
+
+            <div class="queue-number">
+              ${ticket.display_number}
+            </div>
+
+            <div class="queue-service">
+              ${ticket.services?.name || ""}
+            </div>
+
+          </div>
+
+        `;
+
+
+        list.appendChild(row);
+
+      });
+
+    }
+
+
+    // ==========================================
+    // REALTIME
+    // ==========================================
+
+    supabaseClient
+      .channel("staff-queue-live")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "queue_tickets"
+        },
+        function() {
+
+          loadWaitingQueue();
+
+          if (selectedCounter) {
+            loadCurrentTicket();
+          }
+
+        }
+      )
+      .subscribe();
+
+
+    // ==========================================
+    // ERROR
+    // ==========================================
+
+    function showError(message) {
+
+      document.getElementById(
+        "errorMessage"
+      ).innerHTML = `
+        <div class="error">
+          ${message}
+        </div>
+      `;
+
+    }
+
+
+    function clearError() {
+
+      document.getElementById(
+        "errorMessage"
+      ).innerHTML = "";
+
+    }
+
+
+    // ==========================================
+    // START
+    // ==========================================
+
+    loadCounters();
+
+    loadWaitingQueue();
+
+  </script>
+
+</body>
+</html>
