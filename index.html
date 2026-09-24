@@ -9,7 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
@@ -94,30 +93,68 @@
 
     .queue-result {
       display: none;
-      text-align: center;
     }
 
     .queue-label {
+      text-align: center;
       color: #666;
       font-size: 14px;
     }
 
     .queue-number {
+      text-align: center;
       font-size: 64px;
       font-weight: bold;
-      margin: 10px 0 20px;
+      margin: 10px 0 25px;
+    }
+
+    .info-box {
+      background: #f7f7f7;
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .info-label {
+      color: #777;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .info-value {
+      font-size: 25px;
+      font-weight: bold;
     }
 
     .status {
-      padding: 12px;
+      text-align: center;
+      padding: 14px;
       border-radius: 12px;
-      background: #f3f3f3;
+      background: #eef7ee;
+      color: #267326;
       font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .status.called {
+      background: #fff4d6;
+      color: #8a5a00;
+    }
+
+    .status.completed {
+      background: #e8f1ff;
+      color: #245a9c;
+    }
+
+    .status.skipped,
+    .status.cancelled {
+      background: #ffe5e5;
+      color: #a00000;
     }
 
     .back-button {
       width: 100%;
-      margin-top: 15px;
+      margin-top: 18px;
       padding: 13px;
       border: 0;
       border-radius: 12px;
@@ -140,6 +177,12 @@
       font-size: 14px;
     }
 
+    .refresh-info {
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+      margin-top: 15px;
+    }
   </style>
 </head>
 
@@ -147,33 +190,20 @@
 
   <div class="container">
 
-    <!-- HEADER -->
-
     <div class="header">
-
       <h1>Queue System</h1>
-
-      <p>
-        Sila pilih perkhidmatan
-      </p>
-
+      <p>Sila pilih perkhidmatan</p>
     </div>
 
-
-    <!-- SERVICE SELECTION -->
-
+    <!-- SERVICE CARD -->
     <div class="card" id="serviceCard">
 
-      <h2>
-        Pilih Perkhidmatan
-      </h2>
+      <h2>Pilih Perkhidmatan</h2>
 
       <div id="services">
-
         <div class="loading">
           Memuatkan perkhidmatan...
         </div>
-
       </div>
 
       <div id="errorMessage"></div>
@@ -182,32 +212,54 @@
 
 
     <!-- QUEUE RESULT -->
-
-    <div
-      class="card queue-result"
-      id="queueResult"
-    >
+    <div class="card queue-result" id="queueResult">
 
       <div class="queue-label">
         Nombor giliran anda
       </div>
 
-      <div
-        class="queue-number"
-        id="queueNumber"
-      >
+      <div class="queue-number" id="queueNumber">
         A001
       </div>
 
-      <div class="status">
 
-        <strong>Status</strong>
-
-        <br>
-
+      <div class="status" id="queueStatus">
         Menunggu giliran
+      </div>
+
+
+      <!-- CURRENT NUMBER -->
+      <div class="info-box">
+
+        <div class="info-label">
+          Nombor sedang dipanggil
+        </div>
+
+        <div class="info-value" id="currentNumber">
+          -
+        </div>
 
       </div>
+
+
+      <!-- PEOPLE AHEAD -->
+      <div class="info-box">
+
+        <div class="info-label">
+          Orang di hadapan anda
+        </div>
+
+        <div class="info-value" id="peopleAhead">
+          -
+        </div>
+
+      </div>
+
+
+      <div class="refresh-info">
+        Status akan dikemaskini secara automatik
+      </div>
+
 
       <button
         class="back-button"
@@ -223,15 +275,11 @@
 
   <script>
 
-    // ==========================================
-    // SUPABASE CONNECTION
-    // ==========================================
-
     const SUPABASE_URL =
       "https://evgctimzyxvpmbisguqe.supabase.co";
 
     const SUPABASE_KEY =
-      "sb_publishable_-NNxefUNkEcxMRQZM9Ggug_ncGpz4d9";
+      "GANTI_DENGAN_KEY_YANG_SAMA_MACAM_SEBELUM_INI";
 
 
     const supabaseClient =
@@ -239,6 +287,9 @@
         SUPABASE_URL,
         SUPABASE_KEY
       );
+
+
+    let myTicket = null;
 
 
     // ==========================================
@@ -289,7 +340,6 @@
 
 
         button.innerHTML = `
-
           <span class="service-name">
             ${service.name}
           </span>
@@ -297,7 +347,6 @@
           <span class="service-prefix">
             Prefix nombor: ${service.prefix}
           </span>
-
         `;
 
 
@@ -342,34 +391,23 @@
             .split("T")[0];
 
 
-        // GET LAST NUMBER TODAY
-
         const {
           data: existing,
           error: fetchError
         } = await supabaseClient
-
           .from("queue_tickets")
-
           .select("queue_number")
-
-          .eq(
-            "service_id",
-            service.id
-          )
-
+          .eq("service_id", service.id)
           .gte(
             "created_at",
             `${today}T00:00:00`
           )
-
           .order(
             "queue_number",
             {
               ascending: false
             }
           )
-
           .limit(1);
 
 
@@ -400,14 +438,11 @@
             .padStart(3, "0");
 
 
-        // INSERT QUEUE
-
         const {
+          data: insertedTicket,
           error: insertError
         } = await supabaseClient
-
           .from("queue_tickets")
-
           .insert({
 
             service_id:
@@ -422,7 +457,9 @@
             status:
               "waiting"
 
-          });
+          })
+          .select()
+          .single();
 
 
         if (insertError) {
@@ -432,8 +469,11 @@
         }
 
 
-        // SHOW RESULT
+        // Simpan ticket semasa
+        myTicket = insertedTicket;
 
+
+        // Tukar paparan
         document.getElementById(
           "serviceCard"
         ).style.display = "none";
@@ -450,6 +490,14 @@
           displayNumber;
 
 
+        // Load status
+        await updateQueueStatus();
+
+
+        // Aktifkan realtime
+        subscribeToQueue();
+
+
       } catch (error) {
 
         console.error(error);
@@ -458,17 +506,11 @@
         document.getElementById(
           "errorMessage"
         ).innerHTML = `
-
           <div class="error">
-
             Gagal mengambil nombor.
-
             <br>
-
             Sila cuba lagi.
-
           </div>
-
         `;
 
 
@@ -479,6 +521,261 @@
         });
 
       }
+
+    }
+
+
+    // ==========================================
+    // UPDATE QUEUE STATUS
+    // ==========================================
+
+    async function updateQueueStatus() {
+
+      if (!myTicket) {
+        return;
+      }
+
+
+      // Ambil ticket sendiri
+      const {
+        data: myData,
+        error: myError
+      } = await supabaseClient
+        .from("queue_tickets")
+        .select("*")
+        .eq("id", myTicket.id)
+        .single();
+
+
+      if (myError) {
+
+        console.error(myError);
+
+        return;
+
+      }
+
+
+      myTicket = myData;
+
+
+      // ------------------------------------------
+      // Cari nombor yang sedang serving
+      // ------------------------------------------
+
+      const {
+        data: servingTickets,
+        error: servingError
+      } = await supabaseClient
+        .from("queue_tickets")
+        .select("queue_number, display_number")
+        .eq(
+          "service_id",
+          myTicket.service_id
+        )
+        .eq(
+          "status",
+          "serving"
+        )
+        .order(
+          "queue_number",
+          {
+            ascending: true
+          }
+        )
+        .limit(1);
+
+
+      if (servingError) {
+
+        console.error(servingError);
+
+        return;
+
+      }
+
+
+      let currentNumber = "-";
+
+
+      if (
+        servingTickets &&
+        servingTickets.length > 0
+      ) {
+
+        currentNumber =
+          servingTickets[0].display_number;
+
+      }
+
+
+      document.getElementById(
+        "currentNumber"
+      ).textContent =
+        currentNumber;
+
+
+      // ------------------------------------------
+      // Kira orang di hadapan
+      // ------------------------------------------
+
+      let peopleAhead = 0;
+
+
+      if (myTicket.status === "waiting") {
+
+        const {
+          count,
+          error: countError
+        } = await supabaseClient
+          .from("queue_tickets")
+          .select(
+            "*",
+            {
+              count: "exact",
+              head: true
+            }
+          )
+          .eq(
+            "service_id",
+            myTicket.service_id
+          )
+          .eq(
+            "status",
+            "waiting"
+          )
+          .lt(
+            "queue_number",
+            myTicket.queue_number
+          );
+
+
+        if (countError) {
+
+          console.error(countError);
+
+        } else {
+
+          peopleAhead = count || 0;
+
+        }
+
+      }
+
+
+      document.getElementById(
+        "peopleAhead"
+      ).textContent =
+        peopleAhead;
+
+
+      // ------------------------------------------
+      // Status text
+      // ------------------------------------------
+
+      const statusElement =
+        document.getElementById(
+          "queueStatus"
+        );
+
+
+      statusElement.className =
+        "status";
+
+
+      if (myTicket.status === "waiting") {
+
+        statusElement.textContent =
+          "Menunggu giliran";
+
+      }
+
+
+      else if (
+        myTicket.status === "serving"
+      ) {
+
+        statusElement.className =
+          "status called";
+
+        statusElement.textContent =
+          "🔔 Giliran anda sedang dipanggil!";
+
+      }
+
+
+      else if (
+        myTicket.status === "completed"
+      ) {
+
+        statusElement.className =
+          "status completed";
+
+        statusElement.textContent =
+          "Selesai";
+
+      }
+
+
+      else if (
+        myTicket.status === "skipped"
+      ) {
+
+        statusElement.className =
+          "status skipped";
+
+        statusElement.textContent =
+          "Nombor anda telah dilepaskan";
+
+      }
+
+
+      else if (
+        myTicket.status === "cancelled"
+      ) {
+
+        statusElement.className =
+          "status cancelled";
+
+        statusElement.textContent =
+          "Nombor anda telah dibatalkan";
+
+      }
+
+    }
+
+
+    // ==========================================
+    // REALTIME
+    // ==========================================
+
+    function subscribeToQueue() {
+
+      supabaseClient
+        .channel(
+          "queue-live-" +
+          myTicket.id
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "queue_tickets"
+          },
+          function(payload) {
+
+            console.log(
+              "Queue berubah:",
+              payload
+            );
+
+
+            updateQueueStatus();
+
+          }
+        )
+        .subscribe();
 
     }
 
