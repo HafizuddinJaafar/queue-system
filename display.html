@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Queue Display</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #111;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 25px 40px;
+      text-align: center;
+      background: #1b1b1b;
+      border-bottom: 2px solid #333;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 42px;
+    }
+
+    .header p {
+      margin: 8px 0 0;
+      color: #aaa;
+      font-size: 18px;
+    }
+
+    .display-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      padding: 40px;
+      align-items: center;
+    }
+
+    .counter-card {
+      background: #1d1d1d;
+      border-radius: 20px;
+      padding: 35px;
+      text-align: center;
+      border: 2px solid #333;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .counter-name {
+      font-size: 28px;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+
+    .queue-number {
+      font-size: 110px;
+      font-weight: bold;
+      line-height: 1;
+      margin: 20px 0;
+    }
+
+    .service-name {
+      font-size: 22px;
+      color: #bbb;
+      margin-bottom: 15px;
+    }
+
+    .status {
+      font-size: 20px;
+      color: #777;
+    }
+
+    .empty {
+      font-size: 50px;
+      color: #555;
+    }
+
+    .footer {
+      padding: 15px;
+      text-align: center;
+      background: #1b1b1b;
+      color: #666;
+      font-size: 14px;
+    }
+
+    @media (max-width: 700px) {
+      .header h1 {
+        font-size: 30px;
+      }
+
+      .display-container {
+        padding: 20px;
+        grid-template-columns: 1fr;
+      }
+
+      .queue-number {
+        font-size: 80px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>QUEUE SYSTEM</h1>
+    <p>Sila tunggu giliran anda</p>
+  </div>
+
+  <div class="display-container" id="displayContainer">
+    <div class="empty">Loading...</div>
+  </div>
+
+  <div class="footer">
+    Please wait for your number to be called
+  </div>
+
+
+  <script>
+
+    // ==============================
+    // SUPABASE CONFIG
+    // ==============================
+
+    const SUPABASE_URL = "https://evgctimzyxvpmbisguqe.supabase.co";
+
+    const SUPABASE_KEY = "sb_publishable_-NNxefUNkEcxMRQZM9Ggug_ncGpz4d9";
+
+    const supabaseClient = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+
+    // ==============================
+    // LOAD DISPLAY
+    // ==============================
+
+    async function loadDisplay() {
+
+      const container = document.getElementById("displayContainer");
+
+      try {
+
+        const { data: counters, error: counterError } =
+          await supabaseClient
+            .from("counters")
+            .select("*")
+            .eq("is_active", true)
+            .order("id");
+
+        if (counterError) {
+          throw counterError;
+        }
+
+
+        const { data: tickets, error: ticketError } =
+          await supabaseClient
+            .from("queue_tickets")
+            .select(`
+              id,
+              display_number,
+              status,
+              counter_id,
+              service_id,
+              services (
+                name
+              )
+            `)
+            .eq("status", "serving")
+            .order("id", { ascending: false });
+
+        if (ticketError) {
+          throw ticketError;
+        }
+
+
+        container.innerHTML = "";
+
+
+        if (!counters || counters.length === 0) {
+
+          container.innerHTML =
+            '<div class="empty">No counters available</div>';
+
+          return;
+        }
+
+
+        counters.forEach(counter => {
+
+          const ticket = tickets?.find(
+            t => t.counter_id === counter.id
+          );
+
+
+          const card = document.createElement("div");
+
+          card.className = "counter-card";
+
+
+          if (ticket) {
+
+            const serviceName =
+              ticket.services?.name || "";
+
+
+            card.innerHTML = `
+              <div class="counter-name">
+                ${escapeHtml(counter.name)}
+              </div>
+
+              <div class="queue-number">
+                ${escapeHtml(ticket.display_number)}
+              </div>
+
+              <div class="service-name">
+                ${escapeHtml(serviceName)}
+              </div>
+
+              <div class="status">
+                Sila ke kaunter
+              </div>
+            `;
+
+          } else {
+
+            card.innerHTML = `
+              <div class="counter-name">
+                ${escapeHtml(counter.name)}
+              </div>
+
+              <div class="queue-number empty">
+                ---
+              </div>
+
+              <div class="service-name">
+                Tiada pelanggan
+              </div>
+
+              <div class="status">
+                Sila tunggu
+              </div>
+            `;
+
+          }
+
+
+          container.appendChild(card);
+
+        });
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML = `
+          <div class="empty">
+            Unable to load queue
+          </div>
+        `;
+
+      }
+
+    }
+
+
+    // ==============================
+    // ESCAPE HTML
+    // ==============================
+
+    function escapeHtml(value) {
+
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    }
+
+
+    // ==============================
+    // REALTIME
+    // ==============================
+
+    supabaseClient
+      .channel("queue-display")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "queue_tickets"
+        },
+        payload => {
+
+          console.log("Queue updated:", payload);
+
+          loadDisplay();
+
+        }
+      )
+      .subscribe();
+
+
+    // Initial load
+    loadDisplay();
+
+  </script>
+
+</body>
+</html>
