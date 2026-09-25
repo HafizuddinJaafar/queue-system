@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
 
   <title>Queue Display</title>
 
@@ -13,17 +16,30 @@
       box-sizing: border-box;
     }
 
+    html,
     body {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
       font-family: Arial, Helvetica, sans-serif;
       background: #111;
       color: white;
+    }
+
+    body {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
+    /* =========================
+       HEADER
+    ========================= */
+
     .header {
+      width: 100%;
       padding: 25px 40px;
       text-align: center;
       background: #1b1b1b;
@@ -33,6 +49,7 @@
     .header h1 {
       margin: 0;
       font-size: 42px;
+      font-weight: bold;
     }
 
     .header p {
@@ -41,41 +58,75 @@
       font-size: 18px;
     }
 
+    /* =========================
+       DISPLAY
+    ========================= */
+
     .display-container {
       flex: 1;
+      width: 100%;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+
+      /* FORCE 2 COLUMNS */
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+
       gap: 30px;
       padding: 40px;
+
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* =========================
+       COUNTER CARD
+    ========================= */
+
+    .counter-card {
+      width: 100%;
+      min-height: 350px;
+
+      background: #1d1d1d;
+      border-radius: 20px;
+
+      padding: 35px;
+
+      text-align: center;
+
+      border: 2px solid #333;
+
+      box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.3);
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       align-items: center;
     }
 
-    .counter-card {
-      background: #1d1d1d;
-      border-radius: 20px;
-      padding: 35px;
-      text-align: center;
-      border: 2px solid #333;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
     .counter-name {
-      font-size: 28px;
+      font-size: 32px;
+      font-weight: bold;
       color: #aaa;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .queue-number {
       font-size: 110px;
       font-weight: bold;
       line-height: 1;
+
       margin: 20px 0;
+
+      white-space: nowrap;
     }
 
     .service-name {
-      font-size: 22px;
+      font-size: 24px;
       color: #bbb;
+
       margin-bottom: 15px;
+
+      min-height: 30px;
     }
 
     .status {
@@ -88,86 +139,245 @@
       color: #555;
     }
 
+    /* =========================
+       FOOTER
+    ========================= */
+
     .footer {
+      width: 100%;
+
       padding: 15px;
+
       text-align: center;
+
       background: #1b1b1b;
+
       color: #666;
+
       font-size: 14px;
     }
 
-    @media (max-width: 700px) {
+    /* =========================
+       TABLET / SMALL SCREEN
+    ========================= */
+
+    @media (max-width: 900px) {
+
+      .header {
+        padding: 20px;
+      }
+
       .header h1 {
-        font-size: 30px;
+        font-size: 32px;
+      }
+
+      .header p {
+        font-size: 16px;
       }
 
       .display-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+        padding: 15px;
+      }
+
+      .counter-card {
+        min-height: 280px;
         padding: 20px;
+      }
+
+      .counter-name {
+        font-size: 24px;
+      }
+
+      .queue-number {
+        font-size: 75px;
+      }
+
+      .service-name {
+        font-size: 18px;
+      }
+
+      .status {
+        font-size: 16px;
+      }
+    }
+
+    /* =========================
+       PHONE
+    ========================= */
+
+    @media (max-width: 600px) {
+
+      .display-container {
         grid-template-columns: 1fr;
+      }
+
+      .counter-card {
+        min-height: 250px;
       }
 
       .queue-number {
         font-size: 80px;
       }
     }
+
+    /* =========================
+       TV / ANDROID BOX LANDSCAPE
+    ========================= */
+
+    @media (min-width: 1000px) {
+
+      .header {
+        padding: 30px 40px;
+      }
+
+      .header h1 {
+        font-size: 48px;
+      }
+
+      .header p {
+        font-size: 20px;
+      }
+
+      .display-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 40px;
+        padding: 40px;
+      }
+
+      .counter-card {
+        min-height: 400px;
+      }
+
+      .counter-name {
+        font-size: 36px;
+      }
+
+      .queue-number {
+        font-size: 130px;
+      }
+
+      .service-name {
+        font-size: 26px;
+      }
+
+      .status {
+        font-size: 22px;
+      }
+    }
+
   </style>
 </head>
 
 <body>
 
+  <!-- =========================
+       HEADER
+  ========================= -->
+
   <div class="header">
+
     <h1>QUEUE SYSTEM</h1>
-    <p>Sila tunggu giliran anda</p>
+
+    <p>
+      Sila tunggu giliran anda
+    </p>
+
   </div>
 
-  <div class="display-container" id="displayContainer">
-    <div class="empty">Loading...</div>
+
+  <!-- =========================
+       COUNTER DISPLAY
+  ========================= -->
+
+  <div
+    class="display-container"
+    id="displayContainer"
+  >
+
+    <div class="empty">
+      Loading...
+    </div>
+
   </div>
+
+
+  <!-- =========================
+       FOOTER
+  ========================= -->
 
   <div class="footer">
+
     Please wait for your number to be called
+
   </div>
 
 
   <script>
 
-    // ==============================
+    // ==================================================
     // SUPABASE CONFIG
-    // ==============================
+    // ==================================================
 
-    const SUPABASE_URL = "https://evgctimzyxvpmbisguqe.supabase.co";
+    const SUPABASE_URL =
+      "https://evgctimzyxvpmbisguqe.supabase.co";
 
-    const SUPABASE_KEY = "sb_publishable_-NNxefUNkEcxMRQZM9Ggug_ncGpz4d9";
-
-    const supabaseClient = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+    const SUPABASE_KEY =
+      "sb_publishable_-NNxefUNkEcxMRQZM9Ggug_ncGpz4d9";
 
 
-    // ==============================
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    // ==================================================
     // LOAD DISPLAY
-    // ==============================
+    // ==================================================
 
     async function loadDisplay() {
 
-      const container = document.getElementById("displayContainer");
+      const container =
+        document.getElementById(
+          "displayContainer"
+        );
+
 
       try {
 
-        const { data: counters, error: counterError } =
+        // ----------------------------------------------
+        // GET ACTIVE COUNTERS
+        // ----------------------------------------------
+
+        const {
+          data: counters,
+          error: counterError
+        } =
           await supabaseClient
             .from("counters")
             .select("*")
             .eq("is_active", true)
             .order("id");
 
+
         if (counterError) {
+
           throw counterError;
+
         }
 
 
-        const { data: tickets, error: ticketError } =
+        // ----------------------------------------------
+        // GET SERVING TICKETS
+        // ----------------------------------------------
+
+        const {
+          data: tickets,
+          error: ticketError
+        } =
           await supabaseClient
             .from("queue_tickets")
             .select(`
@@ -181,36 +391,69 @@
               )
             `)
             .eq("status", "serving")
-            .order("id", { ascending: false });
+            .order("id", {
+              ascending: false
+            });
+
 
         if (ticketError) {
+
           throw ticketError;
+
         }
 
+
+        // ----------------------------------------------
+        // CLEAR DISPLAY
+        // ----------------------------------------------
 
         container.innerHTML = "";
 
 
-        if (!counters || counters.length === 0) {
+        // ----------------------------------------------
+        // NO COUNTERS
+        // ----------------------------------------------
 
-          container.innerHTML =
-            '<div class="empty">No counters available</div>';
+        if (
+          !counters ||
+          counters.length === 0
+        ) {
+
+          container.innerHTML = `
+            <div class="empty">
+              No counters available
+            </div>
+          `;
 
           return;
+
         }
 
 
+        // ----------------------------------------------
+        // CREATE COUNTER CARDS
+        // ----------------------------------------------
+
         counters.forEach(counter => {
 
-          const ticket = tickets?.find(
-            t => t.counter_id === counter.id
-          );
+          const ticket =
+            tickets?.find(
+              t =>
+                t.counter_id === counter.id
+            );
 
 
-          const card = document.createElement("div");
+          const card =
+            document.createElement("div");
 
-          card.className = "counter-card";
 
+          card.className =
+            "counter-card";
+
+
+          // --------------------------------------------
+          // CUSTOMER BEING SERVED
+          // --------------------------------------------
 
           if (ticket) {
 
@@ -219,41 +462,82 @@
 
 
             card.innerHTML = `
+
               <div class="counter-name">
-                ${escapeHtml(counter.name)}
+
+                ${escapeHtml(
+                  counter.name
+                )}
+
               </div>
+
 
               <div class="queue-number">
-                ${escapeHtml(ticket.display_number)}
+
+                ${escapeHtml(
+                  ticket.display_number
+                )}
+
               </div>
+
 
               <div class="service-name">
-                ${escapeHtml(serviceName)}
+
+                ${escapeHtml(
+                  serviceName
+                )}
+
               </div>
 
+
               <div class="status">
+
                 Sila ke kaunter
+
               </div>
+
             `;
 
-          } else {
+          }
+
+
+          // --------------------------------------------
+          // NO CUSTOMER
+          // --------------------------------------------
+
+          else {
 
             card.innerHTML = `
+
               <div class="counter-name">
-                ${escapeHtml(counter.name)}
+
+                ${escapeHtml(
+                  counter.name
+                )}
+
               </div>
+
 
               <div class="queue-number empty">
+
                 ---
+
               </div>
+
 
               <div class="service-name">
+
                 Tiada pelanggan
+
               </div>
 
+
               <div class="status">
+
                 Sila tunggu
+
               </div>
+
             `;
 
           }
@@ -264,14 +548,24 @@
         });
 
 
-      } catch (error) {
+      }
 
-        console.error(error);
+      catch (error) {
+
+        console.error(
+          "Display error:",
+          error
+        );
+
 
         container.innerHTML = `
+
           <div class="empty">
+
             Unable to load queue
+
           </div>
+
         `;
 
       }
@@ -279,48 +573,98 @@
     }
 
 
-    // ==============================
+    // ==================================================
     // ESCAPE HTML
-    // ==============================
+    // ==================================================
 
     function escapeHtml(value) {
 
       return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+
+        .replace(
+          /</g,
+          "&lt;"
+        )
+
+        .replace(
+          />/g,
+          "&gt;"
+        )
+
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+
+        .replace(
+          /'/g,
+          "&#039;"
+        );
 
     }
 
 
-    // ==============================
-    // REALTIME
-    // ==============================
+    // ==================================================
+    // SUPABASE REALTIME
+    // ==================================================
 
     supabaseClient
+
       .channel("queue-display")
+
       .on(
+
         "postgres_changes",
+
         {
           event: "*",
           schema: "public",
           table: "queue_tickets"
         },
+
         payload => {
 
-          console.log("Queue updated:", payload);
+          console.log(
+            "Queue updated:",
+            payload
+          );
+
 
           loadDisplay();
 
         }
+
       )
+
       .subscribe();
 
 
-    // Initial load
+    // ==================================================
+    // INITIAL LOAD
+    // ==================================================
+
     loadDisplay();
+
+
+    // ==================================================
+    // BACKUP AUTO REFRESH
+    // ==================================================
+
+    // Android Box browser kadang-kadang
+    // tak maintain Supabase realtime.
+    //
+    // Jadi kita refresh data setiap 3 saat.
+
+    setInterval(
+      loadDisplay,
+      3000
+    );
+
 
   </script>
 
